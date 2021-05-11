@@ -106,3 +106,7 @@ module.exports = {
     adicionarProduto,
     editarQuantidade
 }
+
+function teste2(){
+    
+}
