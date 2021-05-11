@@ -96,6 +96,10 @@ async function editarQuantidade(req, res) {
     res.status(200).json(carrinho);
 }
 
+function teste1() {
+
+}
+
 module.exports = {
     listarProdutos,
     detalharCarrinho,
