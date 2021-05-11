@@ -73,10 +73,6 @@ async function adicionarProduto(req, res) {
         return;
     }
 
-    carrinho.subtotal += quantidade * produtoAdicionado.preco;
-    carrinho.dataDeEntrega = format(addBusinessDays(new Date(), 15),'yyyy-MM-dd');
-    carrinho.valorDoFrete = carrinho.subtotal >= 20000 ? 0 : 5000;  
-    carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
     carrinho.produtos.push({
         id: produtoAdicionado.id,
         quantidade: quantidade,
@@ -84,6 +80,7 @@ async function adicionarProduto(req, res) {
         preco: produtoAdicionado.preco,
         categoria: produtoAdicionado.categoria
     })
+    atualizarCarrinho(carrinho);
 
     res.status(200).json(carrinho)
 }
