@@ -95,81 +95,25 @@ async function editarQuantidade(req, res) {
         return;
     }
 
-    if (quantidade < 0) {
-        if (Math.abs(quantidade) >= produtoNoCarrinho.quantidade) {
-            carrinho.subtotal -= produtoNoCarrinho.quantidade * produtoNoCarrinho.preco;
-            carrinho.dataDeEntrega = format(addBusinessDays(new Date(), 15),'yyyy-MM-dd');
-            carrinho.valorDoFrete = carrinho.subtotal >= 20000 ? 0 : 5000;
-            carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
-            
-            carrinho.produtos.splice(carrinho.produtos.indexOf(produtoNoCarrinho), 1);
-            if (carrinho.produtos.length === 0) {
-                carrinho.dataDeEntrega = null;
-                carrinho.valorDoFrete = 0;
-                carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
-            }
-        } else {
-            carrinho.subtotal += quantidade * produtoNoCarrinho.preco;
-            carrinho.dataDeEntrega = format(addBusinessDays(new Date(), 15),'yyyy-MM-dd');
-            carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
-            produtoNoCarrinho.quantidade += quantidade; 
-        }
+    produtoNoCarrinho.quantidade += quantidade;
 
-    } else {
-
-        const lista = JSON.parse(await fs.readFile('./data.json'));
-        const produtoAlterado = lista.produtos.find(produto => produto.id === idProduto);
-        if (produtoAlterado.estoque < (produtoNoCarrinho.quantidade + quantidade)) {
-            res.status(404).json(`No momento não possuímos estoque suficiente p/ quantidade solicitada. Dispomos de ${produtoAlterado.estoque} unidade(s) do produto informado.`)
-            return;
-        }
-        
-        produtoNoCarrinho.quantidade += quantidade;
-        carrinho.subtotal += quantidade * produtoNoCarrinho.preco;
-        carrinho.dataDeEntrega = format(addBusinessDays(new Date(), 15),'yyyy-MM-dd');
-        carrinho.valorDoFrete = carrinho.subtotal >= 20000 ? 0 : 5000;
-        carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
+    if (produtoNoCarrinho.quantidade < 0 ) {
+        produtoNoCarrinho.quantidade += Math.abs(quantidade);
+        res.status(404).json('Você não pode subtrair a quantidade do produto mais do que foi adicionado ao seu carrinho.')
+        return;
     }
 
+    const lista = JSON.parse(await fs.readFile('./data.json'));
+    const produtoAlterado = lista.produtos.find(produto => produto.id === idProduto);
+    if (produtoAlterado.estoque < (produtoNoCarrinho.quantidade + quantidade)) {
+        produtoNoCarrinho.quantidade -= quantidade;
+        res.status(404).json(
+            `No momento não possuímos estoque suficiente p/ quantidade solicitada. Dispomos de ${produtoAlterado.estoque} unidade(s) do produto informado.`
+            )
+    }
+
+    atualizarCarrinho(carrinho);
     res.status(200).json(carrinho);
-
-    // if (quantidade < 0) {
-    //     if (Math.abs(quantidade) >= produtoNoCarrinho.quantidade) {
-    //         carrinho.subtotal -= produtoNoCarrinho.quantidade * produtoNoCarrinho.preco;
-    //         carrinho.dataDeEntrega = format(addBusinessDays(new Date(), 15),'yyyy-MM-dd');
-    //         carrinho.valorDoFrete = carrinho.subtotal >= 20000 ? 0 : 5000;
-    //         carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
-            
-    //         carrinho.produtos.splice(carrinho.produtos.indexOf(produtoNoCarrinho), 1);
-    //         if (carrinho.produtos.length === 0) {
-    //             carrinho.dataDeEntrega = null;
-    //             carrinho.valorDoFrete = 0;
-    //             carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
-    //         }
-    //     } else {
-    //         carrinho.subtotal += quantidade * produtoNoCarrinho.preco;
-    //         carrinho.dataDeEntrega = format(addBusinessDays(new Date(), 15),'yyyy-MM-dd');
-    //         carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
-    //         produtoNoCarrinho.quantidade += quantidade; 
-    //     }
-
-    // } else {
-
-    //     const lista = JSON.parse(await fs.readFile('./data.json'));
-    //     const produtoAlterado = lista.produtos.find(produto => produto.id === idProduto);
-    //     if (produtoAlterado.estoque < (produtoNoCarrinho.quantidade + quantidade)) {
-    //         res.status(404).json(`No momento não possuímos estoque suficiente p/ quantidade solicitada. Dispomos de ${produtoAlterado.estoque} unidade(s) do produto informado.`)
-    //         return;
-    //     }
-        
-    //     produtoNoCarrinho.quantidade += quantidade;
-    //     carrinho.subtotal += quantidade * produtoNoCarrinho.preco;
-    //     carrinho.dataDeEntrega = format(addBusinessDays(new Date(), 15),'yyyy-MM-dd');
-    //     carrinho.valorDoFrete = carrinho.subtotal >= 20000 ? 0 : 5000;
-    //     carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
-    // }
-
-    // res.status(200).json(carrinho);
 }
 
 
