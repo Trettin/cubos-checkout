@@ -56,29 +56,31 @@ async function detalharCarrinho(req, res) {
     res.json(carrinho)
 }
 
+async function estoquista(idProduto) {
+    const estoque = JSON.parse(await fs.readFile('./data.json'));
+    const produtoPesquisado = estoque.produtos.find(produto => produto.id === idProduto);
+    return produtoPesquisado;
+}
+
 async function adicionarProduto(req, res) {
     const productId = req.body.id;
     const quantidade = req.body.quantidade;
 
-    const lista = JSON.parse(await fs.readFile('./data.json'));
-
-    const produtoAdicionado = lista.produtos.find(produto => produto.id === productId);
-    if (!produtoAdicionado) {
-        res.status(404).json('O id informado não corresponde a um de nossos produtos.');
-        return;
+    const produtoPesquisado = await estoquista(productId);
+    if (!produtoPesquisado) {
+        return res.status(404).json('O id informado não corresponde a um de nossos produtos.');
     }
 
-    if (produtoAdicionado.estoque < quantidade) {
-        res.status(404).json(`No momento não possuímos estoque suficiente p/ quantidade solicitada. Dispomos de ${produtoAdicionado.estoque} unidade(s) do produto informado.`)
-        return;
+    if (produtoPesquisado.estoque < quantidade) {
+        return res.status(404).json(`No momento não possuímos estoque suficiente p/ quantidade solicitada. Dispomos de ${produtoPesquisado.estoque} unidade(s) do produto informado.`);
     }
 
     carrinho.produtos.push({
-        id: produtoAdicionado.id,
+        id: produtoPesquisado.id,
         quantidade: quantidade,
-        nome: produtoAdicionado.nome,
-        preco: produtoAdicionado.preco,
-        categoria: produtoAdicionado.categoria
+        nome: produtoPesquisado.nome,
+        preco: produtoPesquisado.preco,
+        categoria: produtoPesquisado.categoria
     })
     atualizarCarrinho(carrinho);
 
@@ -103,13 +105,12 @@ async function editarQuantidade(req, res) {
         return;
     }
 
-    const lista = JSON.parse(await fs.readFile('./data.json'));
-    const produtoAlterado = lista.produtos.find(produto => produto.id === idProduto);
-    if (produtoAlterado.estoque < (produtoNoCarrinho.quantidade + quantidade)) {
+    const produtoPesquisado = await estoquista(idProduto);
+    if (produtoPesquisado.estoque < (produtoNoCarrinho.quantidade + quantidade)) {
         produtoNoCarrinho.quantidade -= quantidade;
         res.status(404).json(
-            `No momento não possuímos estoque suficiente p/ quantidade solicitada. Dispomos de ${produtoAlterado.estoque} unidade(s) do produto informado.`
-            )
+            `No momento não possuímos estoque suficiente p/ quantidade solicitada. Dispomos de ${produtoPesquisado.estoque} unidade(s) do produto informado.`
+            );
     }
 
     atualizarCarrinho(carrinho);
