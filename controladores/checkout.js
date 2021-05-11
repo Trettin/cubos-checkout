@@ -4,9 +4,12 @@ const {
     filtroCategoria, 
     filtroPrecoInicial, 
     filtroPrecoFinal
-} = require('../funcoesUtilitarias/auxListarProdutos')
-const addBusinessDays = require('date-fns/addBusinessDays');
-const format = require('date-fns/format')
+} = require('../funcoesUtilitarias/auxListarProdutos');
+const {
+    carrinho,
+    atualizarCarrinho,
+    estoquista
+} = require('../funcoesUtilitarias/auxCarrinho');
 
 
 async function listarProdutos(req, res) {
@@ -30,36 +33,8 @@ async function listarProdutos(req, res) {
     res.status(200).json(produtosEmEstoque);
 }
 
-const carrinho = {
-    subtotal: 0,
-    dataDeEntrega: null,
-    valorDoFrete: 0,
-    totalAPagar: 0,
-    produtos: []
-}
-
-function atualizarCarrinho(carrinho) {
-    carrinho.subtotal = 0;
-    carrinho.dataDeEntrega = null;
-    carrinho.valorDoFrete = 0;
-    carrinho.totalAPagar = 0;
-
-    for (let produto of carrinho.produtos) {
-        carrinho.subtotal += produto.quantidade * produto.preco;
-    }
-    carrinho.dataDeEntrega = carrinho.subtotal > 0 ? format(addBusinessDays(new Date(), 15),'yyyy-MM-dd') : null;
-    carrinho.valorDoFrete = carrinho.subtotal > 0 && carrinho.subtotal < 20000 ? 5000 : 0;
-    carrinho.totalAPagar = carrinho.subtotal + carrinho.valorDoFrete;
-} 
-
 async function detalharCarrinho(req, res) {
     res.json(carrinho)
-}
-
-async function estoquista(idProduto) {
-    const estoque = JSON.parse(await fs.readFile('./data.json'));
-    const produtoPesquisado = estoque.produtos.find(produto => produto.id === idProduto);
-    return produtoPesquisado;
 }
 
 async function adicionarProduto(req, res) {
@@ -120,7 +95,6 @@ async function editarQuantidade(req, res) {
     atualizarCarrinho(carrinho);
     res.status(200).json(carrinho);
 }
-
 
 module.exports = {
     listarProdutos,
