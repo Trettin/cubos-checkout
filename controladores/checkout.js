@@ -113,6 +113,10 @@ async function editarQuantidade(req, res) {
             );
     }
 
+    if (produtoNoCarrinho.quantidade === 0) {
+        carrinho.produtos.splice(carrinho.produtos.indexOf(produtoNoCarrinho), 1);
+    }
+
     atualizarCarrinho(carrinho);
     res.status(200).json(carrinho);
 }
