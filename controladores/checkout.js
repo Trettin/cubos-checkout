@@ -12,6 +12,9 @@ const {
     achaProdutoNoCarrinho,
     excluindoProduto
 } = require('../funcoesUtilitarias/auxCarrinho');
+const {
+    validarUsuario
+} = require('../funcoesUtilitarias/auxFinalizarCompra');
 
 async function listarProdutos(req, res) {
     const categoria = req.query.categoria;
@@ -146,5 +149,6 @@ module.exports = {
     adicionarProduto,
     editarQuantidade,
     deletarProduto,
-    limparCarrinho
+    limparCarrinho,
+    finalizarCompra
 }
