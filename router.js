@@ -5,7 +5,8 @@ const {
     adicionarProduto,
     editarQuantidade,
     deletarProduto,
-    limparCarrinho
+    limparCarrinho,
+    finalizarCompra
 } = require('./controladores/checkout')
 
 const router = express();
@@ -16,5 +17,6 @@ router.post('/carrinho/produtos', adicionarProduto);
 router.patch('/carrinho/produtos/:idProduto', editarQuantidade);
 router.delete('/carrinho/produtos/:idProduto', deletarProduto);
 router.delete('/carrinho', limparCarrinho);
+router.post('/finalizar-compra', finalizarCompra)
 
 module.exports = router;
