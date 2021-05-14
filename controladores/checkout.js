@@ -113,6 +113,33 @@ async function limparCarrinho(req, res) {
    res.status(200).json('Seu foi esvaziado com sucesso. Boas compras!')
 }
 
+async function finalizarCompra(req, res) {
+    if (carrinho.produtos.length === 0) {
+    return res.status(404).json('Não é possível finalizar uma compra com o carrinho vazio.');
+    }
+
+    for (let produto of carrinho.produtos) {
+        const produtoPesquisado = await estoquista(produto.id);
+        if (produtoPesquisado.estoque < produto.quantidade) {
+            return res.status(404).json(`No momento não possuímos estoque suficiente p/ quantidade solicitada. Dispomos de ${produtoPesquisado.estoque} unidade(s) do produto '${produtoPesquisado.nome}'`);
+        }
+    }
+
+    const userType = req.body.type;
+    const userCountry = req.body.country;
+    const userName = req.body.name.trim();
+    const userCPF = req.body.documents[0].number;
+
+    const erro = validarUsuario(userType, userName, userCountry, userCPF);
+
+    if (erro) {
+        res.status(400).json({erro});
+        return;
+    }
+
+    res.json(req.body)
+}
+
 module.exports = {
     listarProdutos,
     detalharCarrinho,
