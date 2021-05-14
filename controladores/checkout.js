@@ -8,7 +8,8 @@ const {
 const {
     carrinho,
     atualizarCarrinho,
-    estoquista
+    estoquista,
+    excluindoProduto
 } = require('../funcoesUtilitarias/auxCarrinho');
 
 
@@ -89,9 +90,21 @@ async function editarQuantidade(req, res) {
     }
 
     if (produtoNoCarrinho.quantidade === 0) {
-        carrinho.produtos.splice(carrinho.produtos.indexOf(produtoNoCarrinho), 1);
+        excluindoProduto(carrinho.produtos, produtoNoCarrinho);
     }
 
+    atualizarCarrinho(carrinho);
+    res.status(200).json(carrinho);
+}
+
+
+
+async function deletarProduto(req, res) {
+    const produtoAserDeletado = carrinho.produtos.find(produto => produto.id === Number(req.params.idProduto));
+    if (!produtoAserDeletado) {
+        return res.status(404).json('No seu carrinho não consta um produto com Id informado.');
+    }
+    excluindoProduto(carrinho.produtos, produtoAserDeletado);
     atualizarCarrinho(carrinho);
     res.status(200).json(carrinho);
 }
@@ -100,5 +113,6 @@ module.exports = {
     listarProdutos,
     detalharCarrinho,
     adicionarProduto,
-    editarQuantidade
+    editarQuantidade,
+    deletarProduto
 }
