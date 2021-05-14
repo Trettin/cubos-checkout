@@ -107,10 +107,17 @@ async function deletarProduto(req, res) {
     res.status(200).json(carrinho);
 }
 
+async function limparCarrinho(req, res) {
+   carrinho.produtos = [];
+   atualizarCarrinho(carrinho);
+   res.status(200).json('Seu foi esvaziado com sucesso. Boas compras!')
+}
+
 module.exports = {
     listarProdutos,
     detalharCarrinho,
     adicionarProduto,
     editarQuantidade,
-    deletarProduto
+    deletarProduto,
+    limparCarrinho
 }
