@@ -140,7 +140,18 @@ async function finalizarCompra(req, res) {
         return;
     }
 
-    res.json(req.body)
+    const estoque = JSON.parse(await fs.readFile('./data.json'));
+
+    for (let produto of carrinho.produtos) {
+        const produtoPesquisado = estoque.produtos.find(produtoEstoque => produtoEstoque.id === produto.id);
+        produtoPesquisado.estoque -= produto.quantidade;
+    }
+
+    res.status(200).json({"Compra realizada com sucesso": carrinho});
+    await fs.writeFile("./data.json", JSON.stringify(estoque, null, 2));
+    // As duas linhas abaixos não estão funcionais pois ao escrever o arquivo na linha 151 o servidor é resetado e o carrinho automaticamente zerado. 
+    carrinho.produtos = [];
+    atualizarCarrinho(carrinho);
 }
 
 module.exports = {
