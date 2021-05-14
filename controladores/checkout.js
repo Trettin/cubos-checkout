@@ -9,9 +9,9 @@ const {
     carrinho,
     atualizarCarrinho,
     estoquista,
+    achaProdutoNoCarrinho,
     excluindoProduto
 } = require('../funcoesUtilitarias/auxCarrinho');
-
 
 async function listarProdutos(req, res) {
     const categoria = req.query.categoria;
@@ -66,8 +66,8 @@ async function adicionarProduto(req, res) {
 async function editarQuantidade(req, res) {
     const idProduto = Number(req.params.idProduto);
     const quantidade = req.body.quantidade;
-
-    const produtoNoCarrinho = carrinho.produtos.find(produto => produto.id === idProduto);
+    
+    const produtoNoCarrinho = achaProdutoNoCarrinho(carrinho.produtos, idProduto);
     if (!produtoNoCarrinho) {
         res.status(404).json('Você não possui o produto de ID informado em seu carrinho.');
         return;
@@ -97,10 +97,8 @@ async function editarQuantidade(req, res) {
     res.status(200).json(carrinho);
 }
 
-
-
 async function deletarProduto(req, res) {
-    const produtoAserDeletado = carrinho.produtos.find(produto => produto.id === Number(req.params.idProduto));
+    const produtoAserDeletado = achaProdutoNoCarrinho(carrinho.produtos, Number(req.params.idProduto));
     if (!produtoAserDeletado) {
         return res.status(404).json('No seu carrinho não consta um produto com Id informado.');
     }

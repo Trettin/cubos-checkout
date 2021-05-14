@@ -30,6 +30,10 @@ async function estoquista(idProduto) {
     return produtoPesquisado;
 }
 
+function achaProdutoNoCarrinho(arrayProdutos, idDoProduto) {
+    return arrayProdutos.find(produto => produto.id === idDoProduto);
+}
+
 function excluindoProduto(arrayProdutos, produto) {
     arrayProdutos.splice(carrinho.produtos.indexOf(produto), 1);
 }
@@ -38,5 +42,6 @@ module.exports = {
     carrinho,
     atualizarCarrinho,
     estoquista,
+    achaProdutoNoCarrinho,
     excluindoProduto
 }
