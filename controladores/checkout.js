@@ -1,5 +1,8 @@
 const axios = require('axios');
 const fs = require('fs/promises');
+const instanciaAxios = require('../servicos/pagarme');
+const addBusinessDays = require('date-fns/addBusinessDays');
+const format = require('date-fns/format')
 const {
     filtroCategoria, 
     filtroPrecoInicial, 
@@ -15,6 +18,7 @@ const {
 const {
     validarUsuario
 } = require('../funcoesUtilitarias/auxFinalizarCompra');
+
 
 async function listarProdutos(req, res) {
     const categoria = req.query.categoria;
@@ -38,7 +42,7 @@ async function listarProdutos(req, res) {
 }
 
 async function detalharCarrinho(req, res) {
-    res.json(carrinho)
+       res.json(carrinho)
 }
 
 async function adicionarProduto(req, res) {
@@ -117,6 +121,8 @@ async function limparCarrinho(req, res) {
 }
 
 async function finalizarCompra(req, res) {
+    const cupomAtual = 'izipizi'
+
     if (carrinho.produtos.length === 0) {
     return res.status(404).json('Não é possível finalizar uma compra com o carrinho vazio.');
     }
@@ -128,10 +134,10 @@ async function finalizarCompra(req, res) {
         }
     }
 
-    const userType = req.body.type;
-    const userCountry = req.body.country;
-    const userName = req.body.name.trim();
-    const userCPF = req.body.documents[0].number;
+    const userType = req.body.customer.type;
+    const userCountry = req.body.customer.country;
+    const userName = req.body.customer.name.trim();
+    const userCPF = req.body.customer.documents[0].number;
 
     const erro = validarUsuario(userType, userName, userCountry, userCPF);
 
@@ -147,8 +153,47 @@ async function finalizarCompra(req, res) {
         produtoPesquisado.estoque -= produto.quantidade;
     }
 
-    res.status(200).json({"Compra realizada com sucesso": carrinho});
-    await fs.writeFile("./data.json", JSON.stringify(estoque, null, 2));
+    if (req.query.cupom === cupomAtual) carrinho.totalAPagar = Math.floor(carrinho.totalAPagar * 0.9);
+
+
+    const pedido = {
+        amount: carrinho.totalAPagar,
+        payment_method: req.body.payment_method,
+        boleto_expiration_date: format(addBusinessDays(new Date(), 3),'yyyy-MM-dd'),
+        customer: req.body.customer
+    }
+
+    try {
+        const resposta = await instanciaAxios.post('transactions', pedido);
+        res.status(200).json({
+            "Compra realizada com sucesso": carrinho,
+            "Link para pagamento": resposta.data.boleto_url,
+            "Data do vencimento": format(new Date(resposta.data.boleto_expiration_date), 'yyyy-MM-dd'),
+            "Código de barras": resposta.data.boleto_barcode
+        });
+
+        const relatorioVendas = JSON.parse(await fs.readFile('./relatorios/vendas_realizadas.js'));
+
+        const vendaRealizada = {
+            id: resposta.data.id,
+            dataVenda: resposta.data.date_created,
+            produtos: carrinho.produtos,
+            valorVenda: carrinho.totalAPagar,
+            linkBoleto: resposta.data.boleto_url
+        }
+        relatorioVendas.push(vendaRealizada)
+
+        await fs.writeFile("./data.json", JSON.stringify(estoque, null, 2));
+        await fs.writeFile("./relatorios/vendas_realizadas.js", JSON.stringify(relatorioVendas, null, 2));
+
+    } catch (error) {
+        const { data: { errors }, status } = error.response;
+
+        return res.status(status).json({
+            erro: `${errors[0].parameter_name} - ${errors[0].message}`
+        });
+    }
+
     // As duas linhas abaixos não estão funcionais pois ao escrever o arquivo na linha 151 o servidor é resetado e o carrinho automaticamente zerado. 
     carrinho.produtos = [];
     atualizarCarrinho(carrinho);
